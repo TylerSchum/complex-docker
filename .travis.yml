@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t complicated-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run complicated-test npm test -- --coverage
+
+after_success:
+  # build images
+  - docker build -t multi-client ./client
+  - docker build -t multi-nginx ./nginx
+  - docker build -t multi-server ./server
+  - docker build -t multi-worker ./worker
+  # login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images to docker hub
+  - docker push multi-client
+  - docker push multi-nginx
+  - docker push multi-server
+  - docker push multi-worker
